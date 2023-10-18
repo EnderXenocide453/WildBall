@@ -6,10 +6,21 @@ using UnityEngine;
 public class PlayerController : BaseObject
 {
     [SerializeField, Range(1f, 50)] private float speed = 5;
-    [SerializeField] private CameraController cam;
+    [SerializeField, Range(1f, 1000)] private float jumpForce = 20;
     [SerializeField, Range(0.1f, 1)] private float turnSpeed;
+    [SerializeField] private CameraController cam;
 
     private Vector3 _moveDir;
+    private bool _canJump = false;
+
+    private GlobalKeyHandler _keyHandler;
+
+    protected override void Init()
+    {
+        _keyHandler = GameObject.FindGameObjectWithTag("Canvas").GetComponent<GlobalKeyHandler>();
+
+        _keyHandler.onJumpButtonPress += Jump;
+    }
 
     private void Update()
     {
@@ -19,6 +30,23 @@ public class PlayerController : BaseObject
     private void FixedUpdate()
     {
         Move();
+    }
+
+    private void OnCollisionStay(Collision collision)
+    {
+        _canJump = true;
+    }
+
+    private void OnCollisionExit(Collision collision)
+    {
+        _canJump = false;
+    }
+
+    private void Jump()
+    {
+        if (!_canJump) return;
+
+        _body.AddForce(Vector3.up * jumpForce);
     }
 
     private void UpdateAxis()

@@ -832,8 +832,9 @@ MonoBehaviour:
   spawnRotation: {x: 0, y: 0, z: 0, w: 0}
   respawnable: 1
   speed: 5
-  cam: {fileID: 1698574854}
+  jumpForce: 400
   turnSpeed: 1
+  cam: {fileID: 1698574854}
 --- !u!54 &1368460644
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -978,12 +979,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   connectedCamera: {fileID: 1814178185}
   target: {fileID: 1368460648}
-  sensitivity: 1
+  sensitivity: 2
   minAngle: -60
   maxAngle: 60
-  rotationSpeed: 5
+  rotationSpeed: 10
   maxDistance: 5
-  obstacleOffset: 0.1
   inverseX: 0
   inverseY: 0
 --- !u!4 &1698574855
@@ -1373,10 +1373,10 @@ PrefabInstance:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 8476014813387855302}
   - {fileID: 1368460648}
   - {fileID: 1698574855}
   - {fileID: 184723381}
-  - {fileID: 8476014813387855302}
   - {fileID: 150215684}
   - {fileID: 1357443472}
   - {fileID: 1723314927}
