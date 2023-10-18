@@ -26,8 +26,6 @@ public class BaseObject : MonoBehaviour
 
     public void SetRespawn(Vector3 point, Quaternion rotation)
     {
-        Debug.Log($"{point} : {rotation}");
-
         spawnPoint = point;
         spawnRotation = rotation;
     }
