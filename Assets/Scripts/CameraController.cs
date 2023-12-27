@@ -1,11 +1,9 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
     [SerializeField] private Transform connectedCamera;
-    [SerializeField] private Transform target;
+    [SerializeField] private Rigidbody targetBody;
 
     [SerializeField] private float sensitivity = 1;
     [SerializeField] private float minAngle = -45, maxAngle = 90;
@@ -13,17 +11,20 @@ public class CameraController : MonoBehaviour
     [SerializeField] private float maxDistance = 5;
     [SerializeField] private bool inverseX, inverseY;
 
-    private Vector3 _targetRotation;
+    [SerializeField] LayerMask cameraObstaclesMask;
 
-    void Start()
+    private Vector3 _targetRotation;
+    private Vector3 _normalizedCameraPos;
+
+    private void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
         //Cursor.visible = false;
 
-        connectedCamera.localPosition = connectedCamera.localPosition.normalized * maxDistance;
+        _normalizedCameraPos = connectedCamera.localPosition.normalized;
     }
 
-    void Update()
+    private void Update()
     {
         GetInput();
         UpdateCamera();
@@ -33,8 +34,8 @@ public class CameraController : MonoBehaviour
 
     private void GetInput()
     {
-        float x = Input.GetAxis(GlobalValues.MOUSE_Y) * sensitivity;
-        float y = Input.GetAxis(GlobalValues.MOUSE_X) * sensitivity;
+        float x = Input.GetAxis(GlobalValues.MouseY) * sensitivity;
+        float y = Input.GetAxis(GlobalValues.MouseX) * sensitivity;
 
         _targetRotation.x = Mathf.Clamp(_targetRotation.x - x, minAngle, maxAngle) * (inverseX ? -1 : 1);
         _targetRotation.y += y * (inverseY ? -1 : 1);
@@ -43,6 +44,14 @@ public class CameraController : MonoBehaviour
     private void UpdateCamera()
     {
         transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(_targetRotation), rotationSpeed * Time.deltaTime);
-        transform.position = target.position;
+        transform.position = targetBody.position;
+
+        Ray ray = new Ray(transform.position, connectedCamera.position - transform.position);
+        if (Physics.Raycast(ray, out var hit, maxDistance, cameraObstaclesMask)) {
+            connectedCamera.localPosition = _normalizedCameraPos * hit.distance;
+        } else {
+            connectedCamera.localPosition = _normalizedCameraPos * maxDistance;
+        }
+
     }
 }

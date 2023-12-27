@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
@@ -7,7 +5,7 @@ public class MovingPlatform : MonoBehaviour
 {
     private Rigidbody _body;
 
-    void Start()
+    private void Start()
     {
         _body = GetComponent<Rigidbody>();
     }

@@ -8,23 +8,26 @@ public class PlayerController : BaseObject
     [SerializeField, Range(1f, 50)] private float speed = 5;
     [SerializeField, Range(1f, 1000)] private float jumpForce = 20;
     [SerializeField, Range(0.1f, 1)] private float turnSpeed;
-    [SerializeField] private CameraController cam;
+
+    [SerializeField] private LayerMask interactMask;
+    [SerializeField] private Transform collisionBody;
+    [SerializeField] private ParticleSystem deathParticles;
 
     private Vector3 _moveDir;
-    private bool _canJump = false;
 
-    private GlobalKeyHandler _keyHandler;
+    private CameraController _camera;
+    private InteractableObject _activeObj;
+
+    private Dictionary<int, ContactPoint[]> _collisions;
 
     protected override void Init()
     {
-        _keyHandler = GameObject.FindGameObjectWithTag("Canvas").GetComponent<GlobalKeyHandler>();
+        _collisions = new Dictionary<int, ContactPoint[]>();
 
-        _keyHandler.onJumpButtonPress += Jump;
-    }
+        _camera = GameObject.Find("CameraOrigin").GetComponent<CameraController>();
 
-    private void Update()
-    {
-        UpdateAxis();
+        InputManager.instance.onJumpButtonPress += Jump;
+        InputManager.instance.onInteractButtonPress += Interact;
     }
 
     private void FixedUpdate()
@@ -34,31 +37,86 @@ public class PlayerController : BaseObject
 
     private void OnCollisionStay(Collision collision)
     {
-        _canJump = true;
+        foreach (var contact in collision.contacts)
+            Debug.DrawRay(contact.point, contact.normal, Color.blue);
+
+        if (!_collisions.TryAdd(collision.collider.GetInstanceID(), collision.contacts))
+            _collisions[collision.collider.GetInstanceID()] = collision.contacts;
     }
 
     private void OnCollisionExit(Collision collision)
     {
-        _canJump = false;
+        _collisions.Remove(collision.collider.GetInstanceID());
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.TryGetComponent<InteractableObject>(out var obj)) {
+            _activeObj = obj;
+            obj.SetCanvasActive(true);
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.TryGetComponent<InteractableObject>(out var obj)) {
+            _activeObj = null;
+            obj.SetCanvasActive(false);
+        }
     }
 
     private void Jump()
     {
-        if (!_canJump) return;
+        if (_collisions.Count == 0) return;
 
-        _body.AddForce(Vector3.up * jumpForce);
+        body.AddForce(CalculateJumpDirection() * jumpForce);
     }
 
-    private void UpdateAxis()
+    private Vector3 CalculateJumpDirection()
     {
-        float x = Input.GetAxis(GlobalValues.HOR_AXIS);
-        float z = Input.GetAxis(GlobalValues.VERT_AXIS);
+        Vector3 dir = Vector3.zero;
 
-        _moveDir = Quaternion.Euler(0, cam.GetTargetRotation().y, 0) * new Vector3(x, 0, z).normalized;
+        foreach (var collision in _collisions)
+            foreach (var contact in collision.Value) {
+                Debug.DrawRay(contact.point, contact.normal);
+                dir += contact.normal;
+
+                Debug.Log(collision.Key + " " + contact.normal);
+            }
+
+        return dir.normalized;
+    }
+
+    private void Interact()
+    {
+        _activeObj?.Activate();
     }
 
     private void Move()
     {
-        _body.AddForce(_moveDir * speed);
+        _moveDir = Quaternion.Euler(0, _camera.GetTargetRotation().y, 0) * InputManager.instance.axis.normalized;
+
+        body.AddForce(_moveDir * speed);
+    }
+
+    protected override void Respawn()
+    {
+        StartCoroutine(RespawnTo(spawnPoint, speed));
+    }
+
+    private IEnumerator RespawnTo(Vector3 pos, float speed)
+    {
+        deathParticles.Play();
+
+        body.isKinematic = true;
+        collisionBody.gameObject.SetActive(false);
+
+        while (Vector3.Distance(body.position, pos) > 0.01f) {
+            transform.position = Vector3.MoveTowards(transform.position, pos, speed * Time.deltaTime);
+            yield return new WaitForEndOfFrame();
+        }
+
+        body.isKinematic = false;
+        collisionBody.gameObject.SetActive(true);
     }
 }

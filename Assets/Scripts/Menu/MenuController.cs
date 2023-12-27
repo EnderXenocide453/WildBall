@@ -1,17 +1,18 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class MenuController : MonoBehaviour
 {
-    [SerializeField] Transform mainMenu;
-    [SerializeField] Transform levelMenu;
+    [SerializeField] private Transform mainMenu;
+    [SerializeField] private Transform levelMenu;
 
     private void Start()
     {
         mainMenu.gameObject.SetActive(true);
         levelMenu.gameObject.SetActive(false);
+
+        Time.timeScale = 1;
+        Cursor.visible = true;
     }
 
     public void ChangeMenu()

@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
@@ -11,17 +9,25 @@ public class BaseObject : MonoBehaviour
 
     [SerializeField] protected bool respawnable = true;
 
-    protected Rigidbody _body;
+    protected Rigidbody body;
+    protected Rigidbody parentBody;
+
+    protected Vector3 parentVelocity;
 
     private void Start()
     {
-        _body = GetComponent<Rigidbody>();
+        body = GetComponent<Rigidbody>();
 
         if (spawnAsStart) {
             SetRespawn(transform.localPosition, transform.localRotation);
         }
 
         Init();
+    }
+
+    protected virtual void FixedUpdate()
+    {
+        ApplyParentVelocity();
     }
 
     public void SetRespawn(Vector3 point, Quaternion rotation)
@@ -38,12 +44,13 @@ public class BaseObject : MonoBehaviour
             Death();
     }
 
-    protected virtual void Init() { }
+    protected virtual void Init()
+    { }
 
-    protected void Respawn()
+    protected virtual void Respawn()
     {
-        _body.velocity = Vector3.zero;
-        _body.angularVelocity = Vector3.zero;
+        body.velocity = Vector3.zero;
+        body.angularVelocity = Vector3.zero;
 
         transform.localPosition = spawnPoint;
         transform.localRotation = spawnRotation;
@@ -52,5 +59,12 @@ public class BaseObject : MonoBehaviour
     protected void Death()
     {
         Destroy(gameObject);
+    }
+
+    private void ApplyParentVelocity()
+    {
+        Vector3 targetVelocity = parentBody ? parentBody.velocity : Vector3.zero;
+
+        parentVelocity = Vector3.MoveTowards(parentVelocity, targetVelocity, body.drag);
     }
 }

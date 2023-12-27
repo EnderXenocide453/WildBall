@@ -1,12 +1,10 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class ObstacleController : MonoBehaviour
 {
     private Animator _anim;
 
-    void Start()
+    private void Start()
     {
         _anim = GetComponent<Animator>();
     }
